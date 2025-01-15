@@ -39,3 +39,9 @@ int main(int argc, char *argv[]) {
   }
 }
 ```
+
+## Dependencies
+
+- pipewire
+- oscpp
+- microtest

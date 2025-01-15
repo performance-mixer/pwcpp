@@ -1,5 +1,6 @@
 #include "pipewire/stream.h"
 #include "pwcpp/buffer.h"
+#include "pwcpp/midi/parse_midi.h"
 
 #include <algorithm>
 #include <optional>
@@ -10,7 +11,6 @@
 #include <ftest/count_calls.h>
 
 #include <microtest/microtest.h>
-#include <variant>
 
 TEST(GetMidiCCMessaseFromBuffer) {
   char *pod_buffer[4096];
@@ -35,7 +35,7 @@ TEST(GetMidiCCMessaseFromBuffer) {
         return static_cast<spa_pod *>(spa_pod_builder_pop(&builder, &frame));
       });
 
-  auto midi_messages = buffer.parse_midi();
+  auto midi_messages = pwcpp::midi::parse_midi<5>(buffer);
   ASSERT_TRUE(midi_messages.has_value());
   ASSERT_EQ(std::ranges::count_if(
                 midi_messages.value(),
