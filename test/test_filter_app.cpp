@@ -34,12 +34,12 @@ TEST(HandlePropertyUpdate) {
           "test", "34", static_cast<spa_prop>(66),
           [&call_counter_property_handler](auto value, auto &&app) {
             call_counter_property_handler(value);
+            app.user_data->value = value;
           },
-          [&call_counter_property_parser](spa_pod_parser *parser, spa_pod *pod,
-                                          auto &&app) {
+          [&call_counter_property_parser](spa_pod *pod, auto &&app) {
             call_counter_property_parser(pod);
             int32_t value;
-            spa_pod_parser_get_int(parser, &value);
+            spa_pod_get_int(pod, &value);
             return value;
           });
   app.properties.push_back(property);
@@ -47,30 +47,14 @@ TEST(HandlePropertyUpdate) {
   u_int8_t buffer[4096];
   auto pod = pwcpp::spa::pod::make_props_pod(buffer, 4096, 66, 34);
   ASSERT_TRUE(pod.has_value());
-  spa_debug_pod(0, nullptr, pod.value());
   auto object = reinterpret_cast<spa_pod_object *>(pod.value());
-  //  app.handle_property_update(object);
-  struct spa_pod_prop *prop;
-  SPA_POD_OBJECT_FOREACH(object, prop) {
-    /*
-    auto property_it =
-        std::find_if(properties.begin(), properties.end(),
-                     [&prop](auto &&p) { return p->key == prop->key; });
-     */
-    // if (property_it != properties.end()) {
-    spa_debug_pod(0, nullptr, &prop->value);
-    struct spa_pod_parser parser;
-    spa_pod_parser_pod(&parser, &prop->value);
-    int32_t value;
-    auto result = spa_pod_parser_get_int(&parser, &value);
-    //  (*property_it)->handle_property_update(&parser, &prop->value, *this);
-    //}
-    ASSERT_EQ(prop->key, 66);
-  }
+  app.handle_property_update(object);
 
   ASSERT_EQ(call_counter_property_handler.call_arguments.size(), 1);
   ASSERT_EQ(call_counter_property_parser.call_arguments.size(), 1);
   ASSERT_EQ(get<0>(call_counter_property_handler.call_arguments[0]), 34);
+
+  ASSERT_EQ(app.user_data->value, 34);
 }
 
 TEST_MAIN()

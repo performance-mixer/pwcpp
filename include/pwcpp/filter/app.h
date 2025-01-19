@@ -26,8 +26,7 @@ public:
   std::string init;
   spa_prop key;
 
-  virtual void handle_property_update(spa_pod_parser *parser, spa_pod *pod,
-                                      TApp &app) = 0;
+  virtual void handle_property_update(spa_pod *pod, TApp &app) = 0;
 };
 
 template <typename T> class App;
@@ -36,8 +35,7 @@ template <typename TProp, typename TData>
 using property_handler = std::function<void(TProp &, App<TData> &)>;
 
 template <typename TProp, typename TData>
-using property_parser =
-    std::function<TProp(spa_pod_parser *parser, spa_pod *, App<TData> &)>;
+using property_parser = std::function<TProp(spa_pod *, App<TData> &)>;
 
 template <typename TProp, typename TData>
 class PropertyDef : public PropertyDefBase<App<TData>> {
@@ -51,9 +49,8 @@ public:
   pwcpp::filter::property_handler<TProp, TData> property_handler;
   pwcpp::filter::property_parser<TProp, TData> property_parser;
 
-  virtual void handle_property_update(spa_pod_parser *parser, spa_pod *pod,
-                                      App<TData> &app) {
-    auto property_value = property_parser(parser, pod, app);
+  virtual void handle_property_update(spa_pod *pod, App<TData> &app) {
+    auto property_value = property_parser(pod, app);
     property_handler(property_value, app);
   }
 };
@@ -108,11 +105,7 @@ public:
                        [&prop](auto &&p) { return p->key == prop->key; });
 
       if (property_it != properties.end()) {
-        struct spa_pod_parser parser;
-        spa_pod_parser_pod(&parser, &prop->value);
-        int32_t value;
-        auto result = spa_pod_parser_get_int(&parser, &value);
-        (*property_it)->handle_property_update(&parser, &prop->value, *this);
+        (*property_it)->handle_property_update(&prop->value, *this);
       }
     }
   }

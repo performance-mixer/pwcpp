@@ -13,12 +13,10 @@ TEST(CreateIntParamPod) {
   struct spa_pod_prop *prop;
   unsigned int iterations(0);
   SPA_POD_OBJECT_FOREACH(obj, prop) {
-    struct spa_pod_parser parser;
-    spa_pod_parser_pod(&parser, &prop->value);
     int32_t value;
-    spa_pod_parser_get_int(&parser, &value);
+    spa_pod_get_int(&prop->value, &value);
     ASSERT_EQ(value, 42);
-    ASSERT_EQ(prop->key, 4);
+    ASSERT_EQ(prop->key, 0x1000042);
     iterations++;
   }
   ASSERT_EQ(iterations, 1);
