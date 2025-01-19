@@ -26,15 +26,15 @@ struct port_def {
   std::string dsp_format;
 };
 
-class AppBuilder {
+template <typename TData> class AppBuilder {
 public:
-  using FilterAppPtr = std::shared_ptr<App>;
+  using FilterAppPtr = std::shared_ptr<App<TData>>;
   using PipewireInitialization = std::function<void(int, char *[])>;
   using PortBuilder =
       std::function<port *(std::string, std::string, struct pw_filter *)>;
   using FilterAppBuilder =
       std::function<std::tuple<struct pw_main_loop *, struct pw_filter *>(
-          std::string, std::string, std::string, std::shared_ptr<App>)>;
+          std::string, std::string, std::string, FilterAppPtr)>;
 
   AppBuilder()
       : pipewire_initialization(
@@ -46,7 +46,7 @@ public:
           pw_loop_add_signal(
               pw_main_loop_get_loop(loop), SIGINT,
               [](void *user_data, int signal_number) {
-                auto filter_app = static_cast<App *>(user_data);
+                auto filter_app = static_cast<App<TData> *>(user_data);
                 filter_app->quit_main_loop();
               },
               filter_app.get());
@@ -54,7 +54,7 @@ public:
           pw_loop_add_signal(
               pw_main_loop_get_loop(loop), SIGTERM,
               [](void *user_data, int signal_number) {
-                auto filter_app = static_cast<App *>(user_data);
+                auto filter_app = static_cast<App<TData> *>(user_data);
                 filter_app->quit_main_loop();
               },
               filter_app.get());
@@ -62,7 +62,7 @@ public:
           constexpr static const pw_filter_events filter_events = {
               .version = PW_VERSION_FILTER_EVENTS,
               .process = [](void *user_data, struct spa_io_position *position) {
-                auto filter_app = static_cast<App *>(user_data);
+                auto filter_app = static_cast<App<TData> *>(user_data);
                 filter_app->process(position);
               }};
 
@@ -131,9 +131,18 @@ public:
     return *this;
   }
 
-  AppBuilder &
-  add_signal_processor(pwcpp::filter::signal_processor signal_processor) {
+  AppBuilder &add_signal_processor(
+      pwcpp::filter::signal_processor<TData> signal_processor) {
     this->signal_processor = signal_processor;
+    return *this;
+  }
+
+  template <typename T>
+  AppBuilder &add_property(std::string name, std::string init,
+                           std::function<void(T &)> property_handler,
+                           std::function<T(std::string)> property_parser) {
+    properties.push_back(std::make_shared<PropertyDef<T, App<TData>>>(
+        name, init, property_handler, property_parser));
     return *this;
   }
 
@@ -145,7 +154,7 @@ public:
 
     pipewire_initialization(argc, argv);
 
-    auto filter_app = std::make_shared<App>();
+    auto filter_app = std::make_shared<App<TData>>();
 
     auto pw_filter_data =
         filter_app_builder(filter_name, media_type, media_class, filter_app);
@@ -185,7 +194,8 @@ private:
   std::string filter_name;
   std::string media_type;
   std::string media_class;
-  std::optional<pwcpp::filter::signal_processor> signal_processor;
+  std::optional<pwcpp::filter::signal_processor<TData>> signal_processor;
+  std::vector<PropertyDefPtr<App<TData>>> properties;
 };
 
 } // namespace pwcpp::filter

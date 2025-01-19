@@ -8,6 +8,7 @@ enum class error_type {
   UNSUPPORTED_CONFIGURATION,
   MIDI_PARSING_POD_NOT_A_SEQUENCE,
   MIDI_PARSING_POD_CONTAINS_TOO_MANY_MESSAGES,
+  NOT_IMPLEMENTED,
 };
 
 struct error {
@@ -27,6 +28,9 @@ struct error {
     return {"Midi Pod contains too many messages",
             error_type::MIDI_PARSING_POD_CONTAINS_TOO_MANY_MESSAGES};
   }
-};
 
+  static struct error not_implemented() {
+    return {"Not implemented", error_type::NOT_IMPLEMENTED};
+  }
+};
 } // namespace pwcpp

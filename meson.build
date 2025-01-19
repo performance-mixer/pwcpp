@@ -9,8 +9,18 @@ spa_debug_input = executable(
   dependencies: [pipewire_dep],
   include_directories: [include_directory])
 
+filter_app_tests = executable(
+  'filter app tests', 
+  'test/test_filter_app.cpp',
+  dependencies: [pipewire_dep],
+  include_directories: [include_directory])
+
+test(
+  'filter app tests',
+  filter_app_tests)
+
 filter_app_builder_tests = executable(
-  'filter app builder tests', 
+  'filter app builder tests',
   'test/test_filter_app_builder.cpp',
   dependencies: [pipewire_dep],
   include_directories: [include_directory])
@@ -36,3 +46,11 @@ buffer_tests = executable(
   include_directories: [include_directory])
 
 test('buffer tests', buffer_tests)
+
+make_props_pod_tests = executable(
+  'make_props_pod tests',
+  'test/test_make_props_pod.cpp',
+  dependencies: [pipewire_dep],
+  include_directories: [include_directory])
+
+test('make_props_pod tests', buffer_tests)

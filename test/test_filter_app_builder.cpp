@@ -2,6 +2,7 @@
 #include "pwcpp/filter/app_builder.h"
 #include "spa/node/io.h"
 
+#include <cstddef>
 #include <microtest/microtest.h>
 
 #include <ftest/count_calls.h>
@@ -9,10 +10,10 @@
 #include <string>
 
 TEST(NoConfigurationIsNotSupported) {
-  pwcpp::filter::AppBuilder builder(
+  pwcpp::filter::AppBuilder<std::nullptr_t> builder(
       [](int argc, char *argv[]) {},
       [](auto name, auto media_type, auto media_class,
-         pwcpp::filter::AppBuilder::FilterAppPtr app_ptr) {
+         pwcpp::filter::AppBuilder<std::nullptr_t>::FilterAppPtr app_ptr) {
         return std::make_tuple(nullptr, nullptr);
       },
       [](auto name, auto dsp_format, auto filter) { return nullptr; },
@@ -31,13 +32,13 @@ TEST(CreateAFilterAppWithInAndOutPort) {
   ftest::CountCalls<std::string, std::string, std::string>
       call_counter_filter_builder;
 
-  pwcpp::filter::AppBuilder builder(
+  pwcpp::filter::AppBuilder<std::nullptr_t> builder(
       [&call_counter_pw_init](int argc, char **argv) {
         call_counter_pw_init(argc, argv);
       },
       [&call_counter_filter_builder](
           auto name, auto media_type, auto media_class,
-          pwcpp::filter::AppBuilder::FilterAppPtr app_ptr) {
+          pwcpp::filter::AppBuilder<std::nullptr_t>::FilterAppPtr app_ptr) {
         call_counter_filter_builder(name, media_type, media_class);
         return std::make_tuple((struct pw_main_loop *)4, (struct pw_filter *)5);
       },
@@ -61,7 +62,8 @@ TEST(CreateAFilterAppWithInAndOutPort) {
           .add_output_port("test_out", "8 bit raw midi")
           .add_arguments(1, test_data)
           .add_signal_processor([](struct spa_io_position *position,
-                                   auto &&in_ports, auto &&out_ports) {})
+                                   auto &&in_ports, auto &&out_ports,
+                                   std::nullptr_t) {})
           .build();
 
   ASSERT_TRUE(filter_app.has_value());
