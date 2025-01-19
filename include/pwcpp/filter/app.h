@@ -64,7 +64,7 @@ template <typename T>
 using signal_processor =
     std::function<void(struct spa_io_position *position,
                        std::vector<FilterPortPtr> &input_ports,
-                       std::vector<FilterPortPtr> &output_ports, T user_data)>;
+                       std::vector<FilterPortPtr> &output_ports, T &user_data)>;
 
 template <typename TData> class App {
 public:

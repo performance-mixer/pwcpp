@@ -2,6 +2,7 @@
 
 #include "pipewire/filter.h"
 #include "pipewire/port.h"
+#include "pipewire/properties.h"
 #include "pwcpp/error.h"
 #include "pwcpp/filter/app.h"
 #include "pwcpp/filter/filter_port.h"
@@ -34,13 +35,14 @@ public:
       std::function<port *(std::string, std::string, struct pw_filter *)>;
   using FilterAppBuilder =
       std::function<std::tuple<struct pw_main_loop *, struct pw_filter *>(
-          std::string, std::string, std::string, FilterAppPtr)>;
+          std::string, std::string, std::string,
+          std::vector<PropertyDefPtr<App<TData>>> &, FilterAppPtr)>;
 
   AppBuilder()
       : pipewire_initialization(
             [](int argc, char *argv[]) { pw_init(&argc, &argv); }),
         filter_app_builder([](auto name, auto media_type, auto media_class,
-                              auto filter_app) {
+                              auto properties, auto filter_app) {
           auto loop = pw_main_loop_new(NULL);
 
           pw_loop_add_signal(
@@ -66,13 +68,31 @@ public:
                 filter_app->process(position);
               }};
 
-          auto filter = pw_filter_new_simple(
-              pw_main_loop_get_loop(loop), name.c_str(),
-              pw_properties_new(PW_KEY_MEDIA_TYPE, media_type.c_str(),
-                                PW_KEY_MEDIA_CATEGORY, "Filter",
-                                PW_KEY_MEDIA_CLASS, media_class.c_str(),
-                                PW_KEY_MEDIA_ROLE, "DSP", NULL),
-              &filter_events, filter_app.get());
+          auto initial_properties = pw_properties_new(
+              PW_KEY_MEDIA_TYPE, media_type.c_str(), PW_KEY_MEDIA_CATEGORY,
+              "Filter", PW_KEY_MEDIA_CLASS, media_class.c_str(),
+              PW_KEY_MEDIA_ROLE, "DSP", NULL);
+
+          if (!properties.empty()) {
+            auto additional_properties_dict_items =
+                std::make_unique<spa_dict_item[]>(properties.size());
+
+            size_t i = 0;
+            for (auto &&property : properties) {
+              additional_properties_dict_items[i] = SPA_DICT_ITEM_INIT(
+                  property->name.c_str(), property->init.c_str());
+              i++;
+            }
+
+            struct spa_dict additional_properties_dict = SPA_DICT_INIT(
+                additional_properties_dict_items.get(), properties.size());
+
+            pw_properties_add(initial_properties, &additional_properties_dict);
+          }
+
+          auto filter = pw_filter_new_simple(pw_main_loop_get_loop(loop),
+                                             name.c_str(), initial_properties,
+                                             &filter_events, filter_app.get());
 
           return std::make_tuple(loop, filter);
         }),
@@ -137,18 +157,18 @@ public:
     return *this;
   }
 
-  template <typename T>
-  AppBuilder &add_property(std::string name, std::string init,
-                           std::function<void(T &)> property_handler,
-                           std::function<T(std::string)> property_parser) {
-    properties.push_back(std::make_shared<PropertyDef<T, App<TData>>>(
-        name, init, property_handler, property_parser));
+  template <typename TProp>
+  AppBuilder &add_property(std::string name, std::string init, spa_prop key,
+                           property_handler<TProp, TData> property_handler,
+                           property_parser<TProp, TData> property_parser) {
+    properties.push_back(std::make_shared<PropertyDef<TProp, TData>>(
+        name, init, key, property_handler, property_parser));
     return *this;
   }
 
   std::expected<FilterAppPtr, error> build() {
-    if (input_ports.empty() || filter_name.empty() || media_type.empty() ||
-        media_class.empty() || !signal_processor.has_value()) {
+    if (filter_name.empty() || media_type.empty() || media_class.empty() ||
+        !signal_processor.has_value()) {
       return std::unexpected(error::configuration());
     }
 
@@ -156,8 +176,8 @@ public:
 
     auto filter_app = std::make_shared<App<TData>>();
 
-    auto pw_filter_data =
-        filter_app_builder(filter_name, media_type, media_class, filter_app);
+    auto pw_filter_data = filter_app_builder(
+        filter_name, media_type, media_class, properties, filter_app);
 
     filter_app->loop = get<0>(pw_filter_data);
     filter_app->filter = get<1>(pw_filter_data);

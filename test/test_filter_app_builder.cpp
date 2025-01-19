@@ -12,7 +12,7 @@
 TEST(NoConfigurationIsNotSupported) {
   pwcpp::filter::AppBuilder<std::nullptr_t> builder(
       [](int argc, char *argv[]) {},
-      [](auto name, auto media_type, auto media_class,
+      [](auto name, auto media_type, auto media_class, auto properties,
          pwcpp::filter::AppBuilder<std::nullptr_t>::FilterAppPtr app_ptr) {
         return std::make_tuple(nullptr, nullptr);
       },
@@ -37,7 +37,7 @@ TEST(CreateAFilterAppWithInAndOutPort) {
         call_counter_pw_init(argc, argv);
       },
       [&call_counter_filter_builder](
-          auto name, auto media_type, auto media_class,
+          auto name, auto media_type, auto media_class, auto properties,
           pwcpp::filter::AppBuilder<std::nullptr_t>::FilterAppPtr app_ptr) {
         call_counter_filter_builder(name, media_type, media_class);
         return std::make_tuple((struct pw_main_loop *)4, (struct pw_filter *)5);

@@ -9,6 +9,12 @@ spa_debug_input = executable(
   dependencies: [pipewire_dep],
   include_directories: [include_directory])
 
+spa_debug_input = executable(
+  'property',
+  'examples/property.cpp',
+  dependencies: [pipewire_dep],
+  include_directories: [include_directory])
+
 filter_app_tests = executable(
   'filter app tests', 
   'test/test_filter_app.cpp',
