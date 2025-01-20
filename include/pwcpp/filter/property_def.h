@@ -24,7 +24,7 @@ public:
   std::string init;
   spa_prop key;
 
-  virtual void handle_property_update(spa_pod *pod, TApp &app) = 0;
+  virtual std::string handle_property_update(spa_pod *pod, TApp &app) = 0;
 };
 
 template <typename T> class App;
@@ -35,21 +35,28 @@ using property_handler = std::function<void(TProp &, App<TData> &)>;
 template <typename TProp, typename TData>
 using property_parser = std::function<TProp(spa_pod *, App<TData> &)>;
 
+template <typename TProp>
+using property_to_display = std::function<std::string(TProp &)>;
+
 template <typename TProp, typename TData>
 class PropertyDef : public PropertyDefBase<App<TData>> {
 public:
   PropertyDef(std::string name, std::string init, spa_prop key,
               property_handler<TProp, TData> property_handler,
-              property_parser<TProp, TData> property_parser)
+              property_parser<TProp, TData> property_parser,
+              property_to_display<TProp> property_to_display)
       : PropertyDefBase<App<TData>>(name, init, key),
-        property_handler(property_handler), property_parser(property_parser) {}
+        property_handler(property_handler), property_parser(property_parser),
+        property_to_display(property_to_display) {}
 
   pwcpp::filter::property_handler<TProp, TData> property_handler;
   pwcpp::filter::property_parser<TProp, TData> property_parser;
+  pwcpp::filter::property_to_display<TProp> property_to_display;
 
-  virtual void handle_property_update(spa_pod *pod, App<TData> &app) {
+  virtual std::string handle_property_update(spa_pod *pod, App<TData> &app) {
     auto property_value = property_parser(pod, app);
     property_handler(property_value, app);
+    return "";
   }
 };
 

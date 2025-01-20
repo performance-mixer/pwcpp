@@ -20,7 +20,8 @@ int main(int argc, char *argv[]) {
             int32_t value;
             spa_pod_get_int(pod, &value);
             return value;
-          })
+          },
+          [](auto &value) { return std::to_string(value); })
       .add_signal_processor(
           [](auto position, auto in_ports, auto out_ports, my_data) {});
 

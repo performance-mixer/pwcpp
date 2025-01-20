@@ -160,9 +160,11 @@ public:
   template <typename TProp>
   AppBuilder &add_property(std::string name, std::string init, spa_prop key,
                            property_handler<TProp, TData> property_handler,
-                           property_parser<TProp, TData> property_parser) {
+                           property_parser<TProp, TData> property_parser,
+                           property_to_display<TProp> property_to_display) {
     properties.push_back(std::make_shared<PropertyDef<TProp, TData>>(
-        name, init, key, property_handler, property_parser));
+        name, init, key, property_handler, property_parser,
+        property_to_display));
     return *this;
   }
 

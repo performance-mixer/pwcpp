@@ -41,7 +41,8 @@ TEST(HandlePropertyUpdate) {
             int32_t value;
             spa_pod_get_int(pod, &value);
             return value;
-          });
+          },
+          [](auto value) { return std::to_string(value); });
   app.properties.push_back(property);
 
   u_int8_t buffer[4096];
