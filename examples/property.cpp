@@ -13,8 +13,14 @@ int main(int argc, char *argv[]) {
       .add_arguments(argc, argv)
       .add_property<int>(
           "example.property", "42", static_cast<spa_prop>(0x1000042),
-          [](int &property_value, pwcpp::filter::App<my_data> &app) {},
-          [](spa_pod *pod, pwcpp::filter::App<my_data> &app) { return 0; })
+          [](int &property_value, pwcpp::filter::App<my_data> &app) {
+            app.user_data.example_property = property_value;
+          },
+          [](spa_pod *pod, pwcpp::filter::App<my_data> &app) {
+            int32_t value;
+            spa_pod_get_int(pod, &value);
+            return value;
+          })
       .add_signal_processor(
           [](auto position, auto in_ports, auto out_ports, my_data) {});
 
