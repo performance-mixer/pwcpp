@@ -50,7 +50,7 @@ TEST(HandlePropertyUpdate) {
             spa_pod_get_int(pod, &value);
             return value;
           },
-          [&call_counter_property_to_display](auto value) {
+          [&call_counter_property_to_display](auto value, auto &&app) {
             call_counter_property_to_display(value);
             return std::to_string(value);
           });

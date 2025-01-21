@@ -3,6 +3,8 @@
 #include "pwcpp/error.h"
 #include "pwcpp/filter/app.h"
 #include "pwcpp/filter/filter_port.h"
+#include "pwcpp/filter/parameter.h"
+#include "spa/param/props.h"
 
 #include <algorithm>
 #include <expected>
@@ -11,6 +13,7 @@
 #include <memory>
 #include <optional>
 #include <string>
+#include <tuple>
 #include <vector>
 
 #include <pipewire/filter.h>
@@ -37,13 +40,35 @@ public:
   using FilterAppBuilder =
       std::function<std::tuple<struct pw_main_loop *, struct pw_filter *>(
           std::string, std::string, std::string,
-          std::vector<PropertyDefPtr<App<TData>>> &, FilterAppPtr)>;
+          std::vector<PropertyDefPtr<App<TData>>> &, std::vector<Parameter> &,
+          FilterAppPtr)>;
 
   AppBuilder()
       : pipewire_initialization(
             [](int argc, char *argv[]) { pw_init(&argc, &argv); }),
-        filter_app_builder([](auto name, auto media_type, auto media_class,
-                              auto properties, auto filter_app) {
+        filter_app_builder([this](auto name, auto media_type, auto media_class,
+                                  auto properties, auto parameters,
+                                  auto filter_app) {
+          if (parameters.size() > 0) {
+            for (auto &&parameter : parameters) {
+              filter_app->parameter_collection.parameters.push_back(parameter);
+            }
+
+            auto initial = filter_app->parameter_collection.to_display();
+            add_property<std::vector<std::tuple<std::string, variant_type>>>(
+                "parameters", initial, SPA_PROP_params,
+                [](auto &property_value, auto &app) {
+                  return app.parameter_collection.handle_parameter_updates(
+                      property_value);
+                },
+                [](spa_pod *pod, auto &app) {
+                  return ParameterCollection::parse(pod);
+                },
+                [](auto &value, auto &app) {
+                  return app.parameter_collection.to_display();
+                });
+          }
+
           auto loop = pw_main_loop_new(NULL);
 
           pw_loop_add_signal(
@@ -180,13 +205,20 @@ public:
   }
 
   template <typename TProp>
-  AppBuilder &add_property(std::string name, std::string init, spa_prop key,
-                           property_handler<TProp, TData> property_handler,
-                           property_parser<TProp, TData> property_parser,
-                           property_to_display<TProp> property_to_display) {
+  AppBuilder &
+  add_property(std::string name, std::string init, spa_prop key,
+               property_handler<TProp, TData> property_handler,
+               property_parser<TProp, TData> property_parser,
+               property_to_display<TProp, TData> property_to_display) {
     properties.push_back(std::make_shared<PropertyDef<TProp, TData>>(
         name, init, key, property_handler, property_parser,
         property_to_display));
+    return *this;
+  }
+
+  AppBuilder &add_parameter(std::string key,
+                            pwcpp::filter::variant_type value) {
+    parameters.push_back(pwcpp::filter::Parameter(key, value));
     return *this;
   }
 
@@ -200,8 +232,9 @@ public:
 
     auto filter_app = std::make_shared<App<TData>>();
 
-    auto pw_filter_data = filter_app_builder(
-        filter_name, media_type, media_class, properties, filter_app);
+    auto pw_filter_data =
+        filter_app_builder(filter_name, media_type, media_class, properties,
+                           parameters, filter_app);
 
     filter_app->loop = get<0>(pw_filter_data);
     filter_app->filter = get<1>(pw_filter_data);
@@ -244,6 +277,7 @@ private:
   std::string media_class;
   std::optional<pwcpp::filter::signal_processor<TData>> signal_processor;
   std::vector<PropertyDefPtr<App<TData>>> properties;
+  std::vector<pwcpp::filter::Parameter> parameters;
 };
 
 } // namespace pwcpp::filter

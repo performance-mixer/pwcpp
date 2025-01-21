@@ -13,6 +13,7 @@ TEST(NoConfigurationIsNotSupported) {
   pwcpp::filter::AppBuilder<std::nullptr_t> builder(
       [](int argc, char *argv[]) {},
       [](auto name, auto media_type, auto media_class, auto properties,
+         auto parameters,
          pwcpp::filter::AppBuilder<std::nullptr_t>::FilterAppPtr app_ptr) {
         return std::make_tuple(nullptr, nullptr);
       },
@@ -32,6 +33,7 @@ TEST(CreateAppWithProperty) {
   pwcpp::filter::AppBuilder<my_data> builder(
       [](int argc, char **argv) {},
       [](auto name, auto media_type, auto media_class, auto properties,
+         auto parameters,
          pwcpp::filter::AppBuilder<my_data>::FilterAppPtr app_ptr) {
         return std::make_tuple((struct pw_main_loop *)4, (struct pw_filter *)5);
       },
@@ -54,7 +56,9 @@ TEST(CreateAppWithProperty) {
                 spa_pod_get_int(pod, &value);
                 return value;
               },
-              [](auto &value) { return std::to_string(value); })
+              [](auto &value, pwcpp::filter::App<my_data> &app) {
+                return std::to_string(value);
+              })
           .add_signal_processor([](struct spa_io_position *position,
                                    auto &&in_ports, auto &&out_ports,
                                    my_data data) {})
@@ -79,6 +83,7 @@ TEST(CreateAFilterAppWithInAndOutPort) {
       },
       [&call_counter_filter_builder](
           auto name, auto media_type, auto media_class, auto properties,
+          auto parameters,
           pwcpp::filter::AppBuilder<std::nullptr_t>::FilterAppPtr app_ptr) {
         call_counter_filter_builder(name, media_type, media_class);
         return std::make_tuple((struct pw_main_loop *)4, (struct pw_filter *)5);

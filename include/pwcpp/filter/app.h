@@ -1,6 +1,7 @@
 #pragma once
 
 #include "pwcpp/filter/filter_port.h"
+#include "pwcpp/filter/parameter_collection.h"
 #include "pwcpp/filter/property_def.h"
 
 #include <functional>
@@ -43,6 +44,7 @@ public:
   TData user_data;
   std::vector<PropertyDefPtr<App<TData>>> properties;
   App::property_update_function update_property;
+  ParameterCollection parameter_collection;
 
   App()
       : update_property([](PropertyDefBase<App<TData>> &property,
