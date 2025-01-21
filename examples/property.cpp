@@ -15,8 +15,10 @@ int main(int argc, char *argv[]) {
           "example.property", "42", static_cast<spa_prop>(0x1000042),
           [](int &property_value, pwcpp::filter::App<my_data> &app) {
             app.user_data.example_property = property_value;
+            return true;
           },
-          [](spa_pod *pod, pwcpp::filter::App<my_data> &app) {
+          [](spa_pod *pod, pwcpp::filter::App<my_data> &app)
+              -> std::expected<int, pwcpp::error> {
             int32_t value;
             spa_pod_get_int(pod, &value);
             return value;

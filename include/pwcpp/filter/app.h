@@ -3,6 +3,7 @@
 #include "pwcpp/filter/filter_port.h"
 #include "pwcpp/filter/property_def.h"
 
+#include <functional>
 #include <pipewire/filter.h>
 #include <spa/param/props.h>
 #include <spa/pod/parser.h>
@@ -31,6 +32,9 @@ using signal_processor =
 
 template <typename TData> class App {
 public:
+  using property_update_function =
+      std::function<void(PropertyDefBase<App<TData>> &property,
+                         std::string value, App<TData> &app)>;
   std::vector<FilterPortPtr> in_ports;
   std::vector<FilterPortPtr> out_ports;
   struct pw_main_loop *loop;
@@ -38,6 +42,16 @@ public:
   pwcpp::filter::signal_processor<TData> signal_processor;
   TData user_data;
   std::vector<PropertyDefPtr<App<TData>>> properties;
+  App::property_update_function update_property;
+
+  App()
+      : update_property([](PropertyDefBase<App<TData>> &property,
+                           std::string value, App<TData> &app) {
+          struct spa_dict_item items[1];
+          items[0] = SPA_DICT_ITEM_INIT(property.name.c_str(), value.c_str());
+          struct spa_dict update_dict = SPA_DICT_INIT(items, 1);
+          pw_filter_update_properties(app.filter, nullptr, &update_dict);
+        }) {}
 
   size_t number_of_in_ports() { return in_ports.size(); }
   size_t number_of_out_ports() { return out_ports.size(); }
@@ -60,7 +74,7 @@ public:
     signal_processor(position, in_ports, out_ports, user_data);
   }
 
-  void handle_property_update(struct spa_pod_object *obj) {
+  void handle_property_update(const spa_pod_object *obj) {
     struct spa_pod_prop *prop;
     SPA_POD_OBJECT_FOREACH(obj, prop) {
       auto property_it =
@@ -68,7 +82,11 @@ public:
                        [&prop](auto &&p) { return p->key == prop->key; });
 
       if (property_it != properties.end()) {
-        (*property_it)->handle_property_update(&prop->value, *this);
+        auto result =
+            (*property_it)->handle_property_update(&prop->value, *this);
+        if (result.has_value()) {
+          update_property(**property_it, result.value(), *this);
+        }
       }
     }
   }

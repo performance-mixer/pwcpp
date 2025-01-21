@@ -23,6 +23,47 @@ TEST(NoConfigurationIsNotSupported) {
   ASSERT(result.error().type == pwcpp::error_type::UNSUPPORTED_CONFIGURATION);
 }
 
+struct my_data {
+  int example_property;
+};
+
+TEST(CreateAppWithProperty) {
+
+  pwcpp::filter::AppBuilder<my_data> builder(
+      [](int argc, char **argv) {},
+      [](auto name, auto media_type, auto media_class, auto properties,
+         pwcpp::filter::AppBuilder<my_data>::FilterAppPtr app_ptr) {
+        return std::make_tuple((struct pw_main_loop *)4, (struct pw_filter *)5);
+      },
+      [](auto name, auto dsp_format, auto filter) { return nullptr; },
+      [](auto name, auto dsp_format, auto filter) { return nullptr; });
+
+  auto filter_app =
+      builder.set_filter_name("arg1")
+          .set_media_type("arg2")
+          .set_media_class("arg3")
+          .add_property<int>(
+              "property_name", "42", static_cast<spa_prop>(0x1000042),
+              [](int &property_value, pwcpp::filter::App<my_data> &app) {
+                app.user_data.example_property = property_value;
+                return true;
+              },
+              [](spa_pod *pod, pwcpp::filter::App<my_data> &app)
+                  -> std::expected<int, pwcpp::error> {
+                int32_t value;
+                spa_pod_get_int(pod, &value);
+                return value;
+              },
+              [](auto &value) { return std::to_string(value); })
+          .add_signal_processor([](struct spa_io_position *position,
+                                   auto &&in_ports, auto &&out_ports,
+                                   my_data data) {})
+          .build();
+
+  ASSERT_TRUE(filter_app.has_value());
+  ASSERT_EQ(filter_app.value()->properties.size(), 1);
+}
+
 TEST(CreateAFilterAppWithInAndOutPort) {
   ftest::CountCalls<int, char **> call_counter_pw_init;
   ftest::CountCalls<std::string, std::string, struct pw_filter *>

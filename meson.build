@@ -60,3 +60,11 @@ make_props_pod_tests = executable(
   include_directories: [include_directory])
 
 test('make_props_pod tests', buffer_tests)
+
+parameter_collection_tests = executable(
+  'parameter collection tests',
+  'test/test_parameter_collection.cpp',
+  dependencies: [pipewire_dep],
+  include_directories: [include_directory])
+
+test('parameter collection tests', parameter_collection_tests)

@@ -1,12 +1,8 @@
 #pragma once
 
-#include "pipewire/filter.h"
-#include "pipewire/port.h"
-#include "pipewire/properties.h"
 #include "pwcpp/error.h"
 #include "pwcpp/filter/app.h"
 #include "pwcpp/filter/filter_port.h"
-#include "spa/node/io.h"
 
 #include <algorithm>
 #include <expected>
@@ -17,8 +13,13 @@
 #include <string>
 #include <vector>
 
+#include <pipewire/filter.h>
 #include <pipewire/loop.h>
 #include <pipewire/pipewire.h>
+#include <pipewire/port.h>
+#include <pipewire/properties.h>
+
+#include <spa/node/io.h>
 
 namespace pwcpp::filter {
 
@@ -61,18 +62,12 @@ public:
               },
               filter_app.get());
 
-          constexpr static const pw_filter_events filter_events = {
-              .version = PW_VERSION_FILTER_EVENTS,
-              .process = [](void *user_data, struct spa_io_position *position) {
-                auto filter_app = static_cast<App<TData> *>(user_data);
-                filter_app->process(position);
-              }};
-
           auto initial_properties = pw_properties_new(
               PW_KEY_MEDIA_TYPE, media_type.c_str(), PW_KEY_MEDIA_CATEGORY,
               "Filter", PW_KEY_MEDIA_CLASS, media_class.c_str(),
               PW_KEY_MEDIA_ROLE, "DSP", NULL);
 
+          pw_filter *filter = nullptr;
           if (!properties.empty()) {
             auto additional_properties_dict_items =
                 std::make_unique<spa_dict_item[]>(properties.size());
@@ -88,11 +83,38 @@ public:
                 additional_properties_dict_items.get(), properties.size());
 
             pw_properties_add(initial_properties, &additional_properties_dict);
-          }
 
-          auto filter = pw_filter_new_simple(pw_main_loop_get_loop(loop),
-                                             name.c_str(), initial_properties,
-                                             &filter_events, filter_app.get());
+            constexpr static const pw_filter_events filter_events = {
+                .version = PW_VERSION_FILTER_EVENTS,
+                .param_changed =
+                    [](void *user_data, void *port_data, uint32_t parameter_id,
+                       const struct spa_pod *pod) {
+                      auto filter_app = static_cast<App<TData> *>(user_data);
+                      filter_app->handle_property_update(
+                          reinterpret_cast<const spa_pod_object *>(pod));
+                    },
+                .process =
+                    [](void *user_data, struct spa_io_position *position) {
+                      auto filter_app = static_cast<App<TData> *>(user_data);
+                      filter_app->process(position);
+                    }};
+
+            filter = pw_filter_new_simple(pw_main_loop_get_loop(loop),
+                                          name.c_str(), initial_properties,
+                                          &filter_events, filter_app.get());
+          } else {
+            constexpr static const pw_filter_events filter_events = {
+                .version = PW_VERSION_FILTER_EVENTS,
+                .process = [](void *user_data,
+                              struct spa_io_position *position) {
+                  auto filter_app = static_cast<App<TData> *>(user_data);
+                  filter_app->process(position);
+                }};
+
+            filter = pw_filter_new_simple(pw_main_loop_get_loop(loop),
+                                          name.c_str(), initial_properties,
+                                          &filter_events, filter_app.get());
+          }
 
           return std::make_tuple(loop, filter);
         }),
@@ -200,6 +222,10 @@ public:
                                           get<1>(pw_filter_data));
           return std::make_shared<FilterPort>(pw_port);
         });
+
+    if (properties.size() > 0) {
+      filter_app->properties = properties;
+    }
 
     return filter_app;
   };

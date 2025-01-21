@@ -9,6 +9,7 @@ enum class error_type {
   MIDI_PARSING_POD_NOT_A_SEQUENCE,
   MIDI_PARSING_POD_CONTAINS_TOO_MANY_MESSAGES,
   NOT_IMPLEMENTED,
+  ERROR_HANDLING_PROPERTY,
 };
 
 struct error {
@@ -31,6 +32,10 @@ struct error {
 
   static struct error not_implemented() {
     return {"Not implemented", error_type::NOT_IMPLEMENTED};
+  }
+
+  static struct error error_handling_property() {
+    return {"Error handling property", error_type::ERROR_HANDLING_PROPERTY};
   }
 };
 } // namespace pwcpp
