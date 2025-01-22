@@ -47,7 +47,7 @@ public:
       : pipewire_initialization(
             [](int argc, char *argv[]) { pw_init(&argc, &argv); }),
         filter_app_builder([this](auto name, auto media_type, auto media_class,
-                                  auto properties, auto parameters,
+                                  auto &properties, auto &parameters,
                                   auto filter_app) {
           if (parameters.size() > 0) {
             for (auto &&parameter : parameters) {
@@ -93,6 +93,7 @@ public:
               PW_KEY_MEDIA_ROLE, "DSP", NULL);
 
           pw_filter *filter = nullptr;
+
           if (!properties.empty()) {
             auto additional_properties_dict_items =
                 std::make_unique<spa_dict_item[]>(properties.size());
