@@ -15,19 +15,19 @@ int main(int argc, char *argv[]) {
       .set_media_class("Midi/Sink")
       .add_arguments(argc, argv)
       .add_input_port("input", dsp_format)
-      .add_signal_processor(
-          [](auto position, auto in_ports, auto out_ports, std::nullptr_t) {
-            for (auto &&port : in_ports) {
-              auto buffer = port->get_buffer();
-              if (buffer.has_value()) {
-                auto pod = buffer.value().get_pod(0);
-                if (pod.has_value()) {
-                  spa_debug_pod(0, nullptr, pod.value());
-                }
-                buffer.value().finish();
-              }
+      .add_signal_processor([](auto position, auto in_ports, auto out_ports,
+                               std::nullptr_t, auto &parameters) {
+        for (auto &&port : in_ports) {
+          auto buffer = port->get_buffer();
+          if (buffer.has_value()) {
+            auto pod = buffer.value().get_pod(0);
+            if (pod.has_value()) {
+              spa_debug_pod(0, nullptr, pod.value());
             }
-          });
+            buffer.value().finish();
+          }
+        }
+      });
 
   auto filter_app = builder.build();
   if (filter_app.has_value()) {

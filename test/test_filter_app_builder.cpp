@@ -61,7 +61,7 @@ TEST(CreateAppWithProperty) {
               })
           .add_signal_processor([](struct spa_io_position *position,
                                    auto &&in_ports, auto &&out_ports,
-                                   my_data data) {})
+                                   my_data data, auto &&parameters) {})
           .build();
 
   ASSERT_TRUE(filter_app.has_value());
@@ -109,7 +109,7 @@ TEST(CreateAFilterAppWithInAndOutPort) {
           .add_arguments(1, test_data)
           .add_signal_processor([](struct spa_io_position *position,
                                    auto &&in_ports, auto &&out_ports,
-                                   std::nullptr_t) {})
+                                   std::nullptr_t, auto &&parameters) {})
           .build();
 
   ASSERT_TRUE(filter_app.has_value());

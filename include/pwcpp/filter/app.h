@@ -29,7 +29,8 @@ template <typename T>
 using signal_processor =
     std::function<void(struct spa_io_position *position,
                        std::vector<FilterPortPtr> &input_ports,
-                       std::vector<FilterPortPtr> &output_ports, T &user_data)>;
+                       std::vector<FilterPortPtr> &output_ports, T &user_data,
+                       std::vector<Parameter> &parameters)>;
 
 template <typename TData> class App {
 public:
@@ -73,7 +74,8 @@ public:
   void quit_main_loop() { pw_main_loop_quit(loop); }
 
   void process(struct spa_io_position *position) {
-    signal_processor(position, in_ports, out_ports, user_data);
+    signal_processor(position, in_ports, out_ports, user_data,
+                     parameter_collection.parameters);
   }
 
   void handle_property_update(const spa_pod_object *obj) {

@@ -14,8 +14,8 @@ int main(int argc, char *argv[]) {
       .add_parameter("my.sample.parameter", pwcpp::filter::variant_type(45.0))
       .add_parameter("my.other.parameter",
                      pwcpp::filter::variant_type("yo man"))
-      .add_signal_processor(
-          [](auto position, auto in_ports, auto out_ports, my_data) {});
+      .add_signal_processor([](auto position, auto in_ports, auto out_ports,
+                               my_data, auto parameters) {});
 
   auto filter_app = builder.build();
   if (filter_app.has_value()) {

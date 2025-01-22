@@ -26,8 +26,8 @@ int main(int argc, char *argv[]) {
           [](auto &value, pwcpp::filter::App<my_data> &app) {
             return std::to_string(value);
           })
-      .add_signal_processor(
-          [](auto position, auto in_ports, auto out_ports, my_data) {});
+      .add_signal_processor([](auto position, auto in_ports, auto out_ports,
+                               my_data, auto &parameters) {});
 
   auto filter_app = builder.build();
   if (filter_app.has_value()) {
