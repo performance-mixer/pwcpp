@@ -11,8 +11,9 @@ int main(int argc, char *argv[]) {
       .set_media_type("Midi")
       .set_media_class("Midi/Sink")
       .add_arguments(argc, argv)
-      .add_parameter("my.sample.parameter", pwcpp::filter::variant_type(45.0))
-      .add_parameter("my.other.parameter",
+      .add_parameter("my.sample.parameter", 1,
+                     pwcpp::filter::variant_type(45.0))
+      .add_parameter("my.other.parameter", 2,
                      pwcpp::filter::variant_type("yo man"))
       .add_signal_processor([](auto position, auto in_ports, auto out_ports,
                                my_data, auto parameters) {});

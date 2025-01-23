@@ -56,7 +56,12 @@ public:
         case SPA_TYPE_String:
           const char *string_value;
           spa_pod_get_string(struct_field, &string_value);
-          values.push_back(variant_type(std::string(string_value)));
+          std::string value(string_value);
+          if (value == "null") {
+            values.push_back(variant_type(std::nullopt));
+          } else {
+            values.push_back(variant_type(value));
+          }
           break;
         }
       }
@@ -101,6 +106,8 @@ public:
         os << parameter.key << " = " << get<float>(parameter.value) << ", ";
       } else if (std::holds_alternative<double>(parameter.value)) {
         os << parameter.key << " = " << get<double>(parameter.value) << ", ";
+      } else if (std::holds_alternative<std::nullopt_t>(parameter.value)) {
+        os << parameter.key << " = null, ";
       }
     }
     os.seekp(-2, std::ios_base::end);

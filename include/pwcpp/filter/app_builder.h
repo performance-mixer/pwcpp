@@ -217,9 +217,9 @@ public:
     return *this;
   }
 
-  AppBuilder &add_parameter(std::string key,
+  AppBuilder &add_parameter(std::string key, size_t id,
                             pwcpp::filter::variant_type value) {
-    parameters.push_back(pwcpp::filter::Parameter(key, value));
+    parameters.push_back(pwcpp::filter::Parameter(key, id, value));
     return *this;
   }
 

@@ -51,13 +51,13 @@ TEST(ParseParametersMessage) {
 TEST(HandleParameterUpdates) {
   pwcpp::filter::ParameterCollection parameter_collection;
   parameter_collection.parameters.push_back(
-      pwcpp::filter::Parameter("hello", 42));
+      pwcpp::filter::Parameter("hello", 1, 42));
   parameter_collection.parameters.push_back(
-      pwcpp::filter::Parameter("world", 66.0));
+      pwcpp::filter::Parameter("world", 2, 66.0));
   parameter_collection.parameters.push_back(
-      pwcpp::filter::Parameter("buddy", "hello"));
+      pwcpp::filter::Parameter("buddy", 3, "hello"));
   parameter_collection.parameters.push_back(
-      pwcpp::filter::Parameter("order", static_cast<float>(12.5)));
+      pwcpp::filter::Parameter("order", 4, static_cast<float>(12.5)));
 
   std::vector<std::tuple<std::string, pwcpp::filter::variant_type>> updates{
       std::make_tuple("hello", pwcpp::filter::variant_type(12)),
@@ -76,13 +76,13 @@ TEST(HandleParameterUpdates) {
 TEST(ToDisplay) {
   pwcpp::filter::ParameterCollection parameter_collection;
   parameter_collection.parameters.push_back(
-      pwcpp::filter::Parameter("hello", 42));
+      pwcpp::filter::Parameter("hello", 1, 42));
   parameter_collection.parameters.push_back(
-      pwcpp::filter::Parameter("world", 66.5));
+      pwcpp::filter::Parameter("world", 2, 66.5));
   parameter_collection.parameters.push_back(
-      pwcpp::filter::Parameter("buddy", "hello"));
+      pwcpp::filter::Parameter("buddy", 3, "hello"));
   parameter_collection.parameters.push_back(
-      pwcpp::filter::Parameter("order", static_cast<float>(12.5)));
+      pwcpp::filter::Parameter("order", 4, static_cast<float>(12.5)));
 
   auto result = parameter_collection.to_display();
 
