@@ -26,11 +26,24 @@
 
 namespace pwcpp::filter {
 
+/*! \brief A port definition.
+ *
+ * The port definition is used to the port information before creation the port
+ * when building the filter app.
+ */
 struct port_def {
+  /*! \brief The port name. */
   std::string name;
+  /*! \brief The port dsp format. */
   std::string dsp_format;
 };
 
+/*! \brief The filter app builder.
+ *
+ * The filter app builder builds the filter app using the builder pattern.
+ *
+ * \template TData The type of the user data.
+ */
 template <typename TData> class AppBuilder {
 public:
   using FilterAppPtr = std::shared_ptr<App<TData>>;
@@ -43,6 +56,8 @@ public:
           std::vector<PropertyDefPtr<App<TData>>> &, std::vector<Parameter> &,
           FilterAppPtr)>;
 
+  /*! \brief Create the filter app builder.
+   */
   AppBuilder()
       : pipewire_initialization(
             [](int argc, char *argv[]) { pw_init(&argc, &argv); }),
@@ -161,6 +176,7 @@ public:
               NULL, 0));
         }) {}
 
+  /*! \brief Create the filter app builder for testing. */
   AppBuilder(PipewireInitialization pipewire_initialization,
              FilterAppBuilder filter_app_builder, PortBuilder in_port_builder,
              PortBuilder out_port_builder)
@@ -168,43 +184,101 @@ public:
         filter_app_builder(filter_app_builder),
         in_port_builder(in_port_builder), out_port_builder(out_port_builder) {}
 
+  /*! \brief Add an input port to be added to the filter app.
+   *
+   * \param name The name of the input port.
+   * \param dsp_format The dsp format of the input port.
+   *
+   * \return The filter app builder.
+   */
   AppBuilder &add_input_port(std::string name, std::string dsp_format) {
     input_ports.push_back(port_def{name, dsp_format});
     return *this;
   }
 
+  /*! \brief Add an output port to be added to the filter app.
+   *
+   * \param name The name of the output port.
+   * \param dsp_format The dsp format of the output port.
+   *
+   * \return The filter app builder.
+   */
   AppBuilder &add_output_port(std::string name, std::string dsp_format) {
     output_ports.push_back(port_def{name, dsp_format});
     return *this;
   }
 
+  /*! \brief Set the filter name.
+   *
+   * \param name The name of the filter.
+   *
+   * \return The filter app builder.
+   */
   AppBuilder &set_filter_name(std::string name) {
     filter_name = name;
     return *this;
   }
 
+  /*! \brief Set the media type for the filter.
+   *
+   * \param type The media type.
+   *
+   * \return The filter app builder.
+   */
   AppBuilder &set_media_type(std::string type) {
     media_type = type;
     return *this;
   }
 
+  /*! \brief Set the media class for the filter.
+   *
+   * \param media_class The media class.
+   *
+   * \return The filter app builder.
+   */
   AppBuilder &set_media_class(std::string media_class) {
     this->media_class = media_class;
     return *this;
   }
 
+  /*! \brief Add command line arguments to the filter app.
+   *
+   * \param argc The number of arguments.
+   * \param argv The arguments.
+   *
+   * \return The filter app builder.
+   */
   AppBuilder &add_arguments(int argc, char *argv[]) {
     this->argc = argc;
     this->argv = argv;
     return *this;
   }
 
+  /*! \brief Add a signal processor to the filter app.
+   *
+   * \param signal_processor The signal processor.
+   *
+   * \return The filter app builder.
+   */
   AppBuilder &add_signal_processor(
       pwcpp::filter::signal_processor<TData> signal_processor) {
     this->signal_processor = signal_processor;
     return *this;
   }
 
+  /*! \brief Add a property to the filter app.
+   *
+   * \tparam TProp The type of the property.
+   *
+   * \param name The name of the property.
+   * \param init The initial value of the property.
+   * \param key The spa property key.
+   * \param property_handler Handles updates to the property.
+   * \param property_parser Parses the spa pod.
+   * \param property_to_display Converts the property to a string to display.
+   *
+   * \return The filter app builder.
+   */
   template <typename TProp>
   AppBuilder &
   add_property(std::string name, std::string init, spa_prop key,
@@ -217,12 +291,24 @@ public:
     return *this;
   }
 
+  /*! \brief Add a parameter to the filter app.
+   *
+   * \param key The key of the parameter.
+   * \param id The id of the parameter.
+   * \param value The value of the parameter.
+   *
+   * \return The filter app builder.
+   */
   AppBuilder &add_parameter(std::string key, size_t id,
                             pwcpp::filter::variant_type value) {
     parameters.push_back(pwcpp::filter::Parameter(key, id, value));
     return *this;
   }
 
+  /*! \brief Build the filter app.
+   *
+   * \return The filter app if successful, an error otherwise.
+   */
   std::expected<FilterAppPtr, error> build() {
     if (filter_name.empty() || media_type.empty() || media_class.empty() ||
         !signal_processor.has_value()) {
