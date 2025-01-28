@@ -20,8 +20,24 @@
 
 namespace pwcpp::filter {
 
+/*! \brief The parameter collection keeps the parameters for the filter and
+ * provides methods for parameter property handling.
+ *
+ * Parameters are a special pipewire property named `params`. The
+ * ParameterCollection provides the methods for the filter to handle the
+ * parameter updates by parsing the property update.
+ */
 class ParameterCollection {
 public:
+  /*! \brief Parse the Spa Pod used to update the parameters.
+   *
+   * \param pod The Spa Pod to parse.
+   *
+   * \return A tuple of updated parameters wrapped in a std::expected. The first
+   * element is the parameter name, the second element is the parameter value.
+   * If there is an error while parsing the spa pod, the method returns an
+   * error.
+   */
   static std::expected<std::vector<std::tuple<std::string, variant_type>>,
                        error>
   parse(spa_pod *pod) {
@@ -77,6 +93,13 @@ public:
     return result;
   }
 
+  /*! \brief Handle the parameter updates.
+   *
+   * \param updates The parameter updates, normally created by parsing the Spa
+   * Pod.
+   *
+   * \return True if the updates were handled successfully, false otherwise.
+   */
   bool handle_parameter_updates(
       std::span<std::tuple<std::string, variant_type>> updates) {
     for (auto &&update : updates) {
@@ -93,6 +116,10 @@ public:
     return true;
   }
 
+  /*! Convert the paramaters in the collection to a displayable string.
+   *
+   * \return A string representation of the parameters.
+   */
   std::string to_display() {
     std::ostringstream os;
     os << "{ ";
