@@ -13,22 +13,14 @@ int main(int argc, char *argv[]) {
   builder.set_filter_name("spa_debug_input").set_media_type("Midi").
           set_media_class("Midi/Sink").add_arguments(argc, argv).
           add_input_port("input", dsp_format).add_signal_processor(
-            [](auto position, auto in_ports, auto out_ports, std::nullptr_t,
-               auto &parameters) {
+            [](auto position, const auto &in_ports, const auto &,
+               std::nullptr_t, auto &parameters) {
               for (auto &&port : in_ports) {
                 auto buffer = port->get_buffer();
                 if (buffer.has_value()) {
                   auto pod = buffer.value().get_pod(0);
                   if (pod.has_value()) {
-                    if (spa_pod_is_sequence(pod.value())) {
-                      const auto sequence = reinterpret_cast<struct
-                        spa_pod_sequence*>(pod.value());
-
-                      spa_pod_control *pod_control;
-                      SPA_POD_SEQUENCE_FOREACH(sequence, pod_control) {
-                        spa_debug_pod(0, nullptr, &pod_control->value);
-                      }
-                    }
+                    spa_debug_pod(0, nullptr, pod.value());
                   }
                   buffer.value().finish();
                 }

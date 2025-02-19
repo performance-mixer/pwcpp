@@ -38,8 +38,8 @@ public:
     PropertyDefBase<App> &property, std::string value, App &app)>;
   std::vector<FilterPortPtr> in_ports;
   std::vector<FilterPortPtr> out_ports;
-  pw_main_loop *loop;
-  pw_filter *filter;
+  pw_main_loop *loop = nullptr;
+  pw_filter *filter = nullptr;
   filter::signal_processor<TData> signal_processor;
   TData user_data;
   std::vector<PropertyDefPtr<App<TData>>> properties;
@@ -58,16 +58,22 @@ public:
   size_t number_of_in_ports() { return in_ports.size(); }
   size_t number_of_out_ports() { return out_ports.size(); }
 
+  void run(pw_filter_flags flags) {
+    if (pw_filter_connect(filter, flags, NULL, 0) < 0) {
+      fprintf(stderr, "can't connect\n");
+      return;
+    }
+
+    execute();
+  }
+
   void run() {
     if (pw_filter_connect(filter, PW_FILTER_FLAG_RT_PROCESS, NULL, 0) < 0) {
       fprintf(stderr, "can't connect\n");
       return;
     }
 
-    pw_main_loop_run(loop);
-    pw_filter_destroy(filter);
-    pw_main_loop_destroy(loop);
-    pw_deinit();
+    execute();
   }
 
   void quit_main_loop() { pw_main_loop_quit(loop); }
@@ -93,6 +99,14 @@ public:
         }
       }
     }
+  }
+
+private:
+  void execute() {
+    pw_main_loop_run(loop);
+    pw_filter_destroy(filter);
+    pw_main_loop_destroy(loop);
+    pw_deinit();
   }
 };
 } // namespace pwcpp::filter
