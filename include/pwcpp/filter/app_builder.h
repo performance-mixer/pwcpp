@@ -202,7 +202,7 @@ public:
   }
 
   AppBuilder &add_parameter(const std::string& key, size_t id,
-                            const pwcpp::filter::variant_type& value) {
+                            const pwcpp::spa::pod::param_value_variant& value) {
     parameters.emplace_back(key, id, value);
     return *this;
   }

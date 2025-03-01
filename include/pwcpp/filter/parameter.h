@@ -1,22 +1,20 @@
 #pragma once
 
-#include <optional>
 #include <string>
 #include <utility>
 #include <variant>
+#include <pwcpp/spa/pod/utils.h>
 
 namespace pwcpp::filter {
-using variant_type = std::variant<
-  int, float, double, std::string, std::nullopt_t>;
-
 class Parameter {
 public:
-  Parameter(std::string key, size_t id, variant_type value)
+  Parameter(std::string key, size_t id,
+            pwcpp::spa::pod::param_value_variant value)
     : key(std::move(key)), id(id), value(std::move(value)) {}
 
   std::string key;
   size_t id;
-  variant_type value;
+  pwcpp::spa::pod::param_value_variant value;
 
   template <typename T>
   const T &get() const { return std::get<T>(value); }
