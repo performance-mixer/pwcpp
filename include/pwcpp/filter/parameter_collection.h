@@ -116,7 +116,7 @@ public:
     return true;
   }
 
-  /*! Convert the paramaters in the collection to a displayable string.
+  /*! Convert the parameters in the collection to a displayable string.
    *
    * \return A string representation of the parameters.
    */

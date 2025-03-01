@@ -15,6 +15,7 @@
 #include <vector>
 
 #include <pipewire/pipewire.h>
+#include <pwcpp/spa/pod/utils.h>
 
 namespace pwcpp::filter {
 template <typename TApp>
@@ -49,17 +50,23 @@ public:
   App()
     : update_property([](PropertyDefBase<App> &property,
                          std::string value, App &app) {
-      spa_dict_item items[1];
-      items[0] = SPA_DICT_ITEM_INIT(property.name.c_str(), value.c_str());
-      auto update_dict = SPA_DICT_INIT(items, 1);
-      pw_filter_update_properties(app.filter, nullptr, &update_dict);
+      // spa_dict_item items[1];
+      // items[0] = SPA_DICT_ITEM_INIT(property.name.c_str(), value.c_str());
+      // auto update_dict = SPA_DICT_INIT(items, 1);
+      // pw_filter_update_properties(app.filter, nullptr, &update_dict);
+      std::uint8_t buffer[1024];
+      std::vector<std::tuple<std::string, pwcpp::spa::pod::param_value_variant>>
+        parameters{{property.name, value}};
+      auto pod = pwcpp::spa::pod::build_set_params_message(
+        buffer, 1024, parameters);
+      pw_filter_update_params(app.filter, nullptr, pod, 1);
     }) {}
 
   size_t number_of_in_ports() { return in_ports.size(); }
   size_t number_of_out_ports() { return out_ports.size(); }
 
   void run(pw_filter_flags flags) {
-    if (pw_filter_connect(filter, flags, NULL, 0) < 0) {
+    if (pw_filter_connect(filter, flags, nullptr, 0) < 0) {
       fprintf(stderr, "can't connect\n");
       return;
     }
@@ -68,7 +75,7 @@ public:
   }
 
   void run() {
-    if (pw_filter_connect(filter, PW_FILTER_FLAG_RT_PROCESS, NULL, 0) < 0) {
+    if (pw_filter_connect(filter, PW_FILTER_FLAG_RT_PROCESS, nullptr, 0) < 0) {
       fprintf(stderr, "can't connect\n");
       return;
     }

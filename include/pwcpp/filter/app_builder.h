@@ -14,6 +14,7 @@
 #include <optional>
 #include <string>
 #include <tuple>
+#include <utility>
 #include <vector>
 
 #include <pipewire/filter.h>
@@ -58,7 +59,7 @@ public:
 
           auto initial = filter_app->parameter_collection.to_display();
           add_property<std::vector<std::tuple<std::string, variant_type>>>(
-            "parameters", initial, SPA_PROP_params,
+            "params", initial, SPA_PROP_params,
             [](auto &property_value, auto &app) {
               return app.parameter_collection.handle_parameter_updates(
                 property_value);
@@ -69,7 +70,7 @@ public:
             });
         }
 
-        auto loop = pw_main_loop_new(NULL);
+        auto loop = pw_main_loop_new(nullptr);
 
         pw_loop_add_signal(pw_main_loop_get_loop(loop), SIGINT,
                            [](void *user_data, int signal_number) { auto
@@ -89,21 +90,13 @@ public:
         pw_filter *filter = nullptr;
 
         if (!properties.empty()) {
-          auto additional_properties_dict_items = std::make_unique<spa_dict_item
-            []>(properties.size());
+          std::vector<std::tuple<
+            std::string, pwcpp::spa::pod::param_value_variant>> message_params;
 
-          size_t i = 0;
           for (auto &&property : properties) {
-            additional_properties_dict_items[i] = SPA_DICT_ITEM_INIT(
-              property->name.c_str(), property->init.c_str());
-            i++;
+            message_params.
+              emplace_back(property->name, property->initial_value);
           }
-
-          struct spa_dict additional_properties_dict = SPA_DICT_INIT(
-            additional_properties_dict_items.get(),
-            static_cast<u_int32_t>(properties.size()));
-
-          pw_properties_add(initial_properties, &additional_properties_dict);
 
           constexpr static const pw_filter_events filter_events = {
             .version = PW_VERSION_FILTER_EVENTS,
@@ -155,32 +148,33 @@ public:
   AppBuilder(PipewireInitialization pipewire_initialization,
              FilterAppBuilder filter_app_builder, PortBuilder in_port_builder,
              PortBuilder out_port_builder)
-    : pipewire_initialization(pipewire_initialization),
-      filter_app_builder(filter_app_builder), in_port_builder(in_port_builder),
-      out_port_builder(out_port_builder) {}
+    : pipewire_initialization(std::move(pipewire_initialization)),
+      filter_app_builder(filter_app_builder), in_port_builder(std::move(in_port_builder)),
+      out_port_builder(std::move(out_port_builder)),
+      pipewire_initialization_(std::move(pipewire_initialization)) {}
 
   AppBuilder &add_input_port(std::string name, std::string dsp_format) {
-    input_ports.push_back(port_def{name, dsp_format});
+    input_ports.push_back(port_def{std::move(name), std::move(dsp_format)});
     return *this;
   }
 
   AppBuilder &add_output_port(std::string name, std::string dsp_format) {
-    output_ports.push_back(port_def{name, dsp_format});
+    output_ports.push_back(port_def{std::move(name), std::move(dsp_format)});
     return *this;
   }
 
   AppBuilder &set_filter_name(std::string name) {
-    filter_name = name;
+    filter_name = std::move(name);
     return *this;
   }
 
   AppBuilder &set_media_type(std::string type) {
-    media_type = type;
+    media_type = std::move(type);
     return *this;
   }
 
   AppBuilder &set_media_class(std::string media_class) {
-    this->media_class = media_class;
+    this->media_class = std::move(media_class);
     return *this;
   }
 
@@ -207,9 +201,9 @@ public:
     return *this;
   }
 
-  AppBuilder &add_parameter(std::string key, size_t id,
-                            pwcpp::filter::variant_type value) {
-    parameters.push_back(pwcpp::filter::Parameter(key, id, value));
+  AppBuilder &add_parameter(const std::string& key, size_t id,
+                            const pwcpp::filter::variant_type& value) {
+    parameters.emplace_back(key, id, value);
     return *this;
   }
 
@@ -271,5 +265,6 @@ private:
   std::optional<pwcpp::filter::signal_processor<TData>> signal_processor;
   std::vector<PropertyDefPtr<App<TData>>> properties;
   std::vector<pwcpp::filter::Parameter> parameters;
+  PipewireInitialization pipewire_initialization_;
 };
 } // namespace pwcpp::filter
