@@ -3,6 +3,7 @@
 #include "pwcpp/filter/filter_port.h"
 #include "pwcpp/filter/parameter_collection.h"
 #include "pwcpp/filter/property_def.h"
+#include "pwcpp/property/property.h"
 
 #include <functional>
 #include <pipewire/filter.h>
