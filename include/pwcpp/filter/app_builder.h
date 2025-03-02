@@ -121,8 +121,23 @@ public:
               pod);
             if (parameter_id == SPA_PARAM_Props) {
               const auto property = spa_pod_object_find_prop(
-                pod_object, nullptr, SPA_PARAM_Props);
+                pod_object, nullptr, SPA_PROP_params);
               app->parameters_property->update_from_pod(&property->value);
+
+              std::uint8_t buffer[1024];
+              spa_pod_builder builder;
+              spa_pod_builder_init(&builder, buffer, sizeof(buffer));
+              spa_pod_frame frame;
+              spa_pod_builder_push_object(&builder, &frame,
+                                          SPA_TYPE_OBJECT_Props,
+                                          SPA_PARAM_Props);
+              app->parameters_property->add_to_pod_object(&builder);
+
+              const spa_pod *params_pod[1];
+              params_pod[0] = static_cast<spa_pod*>(spa_pod_builder_pop(
+                &builder, &frame));
+
+              pw_filter_update_params(app->filter, nullptr, params_pod, 1);
             }
           },
           .process = [](void *user_data, struct spa_io_position *position) {
