@@ -5,9 +5,14 @@
 #include <expected>
 #include <string>
 #include <utility>
+#include <variant>
+#include <optional>
+#include <spa/param/props.h>
+#include <spa/pod/builder.h>
 
 namespace pwcpp::property {
-using property_value_type = std::variant<int, float, double, std::string, bool>;
+using property_value_type = std::variant<
+  int, float, double, std::string, bool, std::nullopt_t>;
 
 inline std::expected<void, pwcpp::error>
 write_property_value(spa_pod_builder *builder, property_value_type value) {
@@ -23,7 +28,7 @@ write_property_value(spa_pod_builder *builder, property_value_type value) {
     spa_pod_builder_bool(builder, std::get<bool>(value));
   }
 
-  return std::unexpected(error::error_handling_property());
+  return {};
 }
 
 class Property {
@@ -57,35 +62,5 @@ public:
 
 private:
   property_value_type _value{};
-};
-
-class ParametersProperty : public Property {
-public:
-  ParametersProperty(
-    std::vector<std::tuple<std::string, property_value_type>> parameters) :
-    Property(SPA_PROP_params), _parameters(std::move(parameters)) {}
-
-  ~ParametersProperty() override = default;
-
-  std::expected<void, error>
-  add_to_pod_object(spa_pod_builder *builder) override {
-    if (!_parameters.empty()) {
-      spa_pod_builder_prop(builder, _key, 0);
-      spa_pod_frame frame;
-      spa_pod_builder_push_struct(builder, &frame);
-      for (auto &parameter : _parameters) {
-        spa_pod_builder_string(builder, std::get<0>(parameter).c_str());
-        auto result = write_property_value(builder, std::get<1>(parameter));
-        if (!result.has_value()) {
-          return std::unexpected(result.error());
-        }
-      }
-    }
-
-    return std::unexpected(error::not_implemented());
-  };
-
-private:
-  std::vector<std::tuple<std::string, property_value_type>> _parameters{};
 };
 }

@@ -11,6 +11,7 @@
 #include <vector>
 
 #include <pipewire/pipewire.h>
+#include <pwcpp/property/parameters_property.h>
 
 namespace pwcpp::filter {
 using FilterPortPtr = std::shared_ptr<FilterPort>;
@@ -20,7 +21,9 @@ using signal_processor = std::function<void(spa_io_position *position,
                                             std::vector<FilterPortPtr> &
                                             input_ports,
                                             std::vector<FilterPortPtr> &
-                                            output_ports, T &user_data)>;
+                                            output_ports,
+                                            property::ParametersProperty &
+                                            parameters, T &user_data)>;
 
 template <typename TData>
 class App {
@@ -31,11 +34,12 @@ public:
   pw_filter *filter = nullptr;
   filter::signal_processor<TData> signal_processor;
   TData user_data;
+  std::shared_ptr<property::ParametersProperty> parameters_property = nullptr;
 
-  size_t number_of_in_ports() { return in_ports.size(); }
-  size_t number_of_out_ports() { return out_ports.size(); }
+  size_t number_of_in_ports() const { return in_ports.size(); }
+  size_t number_of_out_ports() const { return out_ports.size(); }
 
-  void run(pw_filter_flags flags) {
+  void run(const pw_filter_flags flags) {
     if (pw_filter_connect(filter, flags, nullptr, 0) < 0) {
       fprintf(stderr, "can't connect\n");
       return;
@@ -53,14 +57,15 @@ public:
     execute();
   }
 
-  void quit_main_loop() { pw_main_loop_quit(loop); }
+  void quit_main_loop() const { pw_main_loop_quit(loop); }
 
   void process(spa_io_position *position) {
-    signal_processor(position, in_ports, out_ports, user_data);
+    signal_processor(position, in_ports, out_ports, *parameters_property,
+                     user_data);
   }
 
 private:
-  void execute() {
+  void execute() const {
     pw_main_loop_run(loop);
     pw_filter_destroy(filter);
     pw_main_loop_destroy(loop);
