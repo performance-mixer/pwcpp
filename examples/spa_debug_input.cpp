@@ -14,7 +14,7 @@ int main(int argc, char *argv[]) {
           set_media_class("Midi/Sink").add_arguments(argc, argv).
           add_input_port("input", dsp_format).add_signal_processor(
             [](auto position, const auto &in_ports, const auto &,
-               std::nullptr_t, auto &parameters) {
+               std::nullptr_t) {
               for (auto &&port : in_ports) {
                 auto buffer = port->get_buffer();
                 if (buffer.has_value()) {
