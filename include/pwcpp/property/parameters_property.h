@@ -9,7 +9,7 @@
 namespace pwcpp::property {
 class ParametersProperty : public Property {
 public:
-  ParametersProperty(
+  explicit ParametersProperty(
     std::vector<std::tuple<std::string, property_value_type>> parameters) :
     Property(SPA_PROP_params), _parameters(std::move(parameters)) {}
 
@@ -19,7 +19,7 @@ public:
   add_to_pod_object(spa_pod_builder *builder) override {
     if (!_parameters.empty()) {
       spa_pod_builder_prop(builder, _key, 0);
-      spa_pod_frame frame;
+      spa_pod_frame frame{};
       spa_pod_builder_push_struct(builder, &frame);
       for (auto &parameter : _parameters) {
         spa_pod_builder_string(builder, std::get<0>(parameter).c_str());
@@ -57,6 +57,10 @@ public:
     return {};
   }
 
+  std::span<const std::tuple<std::string, property_value_type>> parameters() {
+    return _parameters;
+  }
+
 private:
   std::vector<std::tuple<std::string, property_value_type>> _parameters{};
 
@@ -72,7 +76,7 @@ private:
       if (count % 2 == 0) {
         const char *key;
         spa_pod_get_string(struct_field, &key);
-        keys.push_back(std::string(key));
+        keys.emplace_back(key);
       } else {
         auto type = SPA_POD_TYPE(struct_field);
         switch (type) {
