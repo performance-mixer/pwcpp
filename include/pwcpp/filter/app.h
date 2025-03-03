@@ -36,8 +36,8 @@ public:
   TData user_data;
   std::shared_ptr<property::ParametersProperty> parameters_property = nullptr;
 
-  size_t number_of_in_ports() const { return in_ports.size(); }
-  size_t number_of_out_ports() const { return out_ports.size(); }
+  [[nodiscard]] std::size_t number_of_in_ports() const { return in_ports.size(); }
+  [[nodiscard]] std::size_t number_of_out_ports() const { return out_ports.size(); }
 
   void run(const pw_filter_flags flags) {
     if (pw_filter_connect(filter, flags, nullptr, 0) < 0) {

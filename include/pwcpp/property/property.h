@@ -26,6 +26,8 @@ write_property_value(spa_pod_builder *builder, property_value_type value) {
     spa_pod_builder_string(builder, std::get<std::string>(value).c_str());
   } else if (std::holds_alternative<bool>(value)) {
     spa_pod_builder_bool(builder, std::get<bool>(value));
+  } else if (std::holds_alternative<std::nullopt_t>(value)) {
+    spa_pod_builder_none(builder);
   }
 
   return {};
