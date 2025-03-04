@@ -122,6 +122,9 @@ public:
             if (parameter_id == SPA_PARAM_Props) {
               const auto property = spa_pod_object_find_prop(
                 pod_object, nullptr, SPA_PROP_params);
+
+              if (property == nullptr) { return; }
+
               app->parameters_property->update_from_pod(&property->value);
 
               std::uint8_t buffer[1024];
