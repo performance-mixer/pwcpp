@@ -7,6 +7,8 @@
 #include <utility>
 #include <variant>
 #include <optional>
+#include <ostream>
+
 #include <spa/param/props.h>
 #include <spa/pod/builder.h>
 
@@ -60,7 +62,7 @@ public:
     return write_property_value(builder, _value);
   }
 
-  const property_value_type &value() const { return _value; }
+  [[nodiscard]] const property_value_type &value() const { return _value; }
 
 private:
   property_value_type _value{};
