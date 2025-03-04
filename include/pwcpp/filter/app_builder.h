@@ -38,13 +38,12 @@ public:
   using PortBuilder = std::function<port *(std::string, std::string,
                                            struct pw_filter *)>;
   using FilterAppBuilder = std::function<std::tuple<
-    struct pw_main_loop*, struct pw_filter*>(std::string name,
-                                             std::string media_type,
-                                             std::string media_class,
-                                             std::vector<std::tuple<
-                                               std::string, std::string>>
-                                             filter_info_properties,
-                                             FilterAppPtr filter_app)>;
+    pw_main_loop*, struct pw_filter*>(std::string name, std::string media_type,
+                                      std::string media_class,
+                                      std::vector<std::tuple<
+                                        std::string, std::string>>
+                                      filter_info_properties,
+                                      FilterAppPtr filter_app)>;
 
   AppBuilder()
     : pipewire_initialization([](int argc, char *argv[]) {
@@ -128,9 +127,9 @@ public:
               app->parameters_property->update_from_pod(&property->value);
 
               std::uint8_t buffer[1024];
-              spa_pod_builder builder;
+              spa_pod_builder builder{};
               spa_pod_builder_init(&builder, buffer, sizeof(buffer));
-              spa_pod_frame frame;
+              spa_pod_frame frame{};
               spa_pod_builder_push_object(&builder, &frame,
                                           SPA_TYPE_OBJECT_Props,
                                           SPA_PARAM_Props);

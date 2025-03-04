@@ -14,12 +14,14 @@
 
 namespace pwcpp::property {
 using property_value_type = std::variant<
-  int, float, double, std::string, bool, std::nullopt_t>;
+  int, long, float, double, std::string, bool, std::nullopt_t>;
 
 inline std::expected<void, pwcpp::error>
 write_property_value(spa_pod_builder *builder, property_value_type value) {
   if (std::holds_alternative<int>(value)) {
     spa_pod_builder_int(builder, std::get<int>(value));
+  } else if (std::holds_alternative<long>(value)) {
+    spa_pod_builder_long(builder, std::get<long>(value));
   } else if (std::holds_alternative<float>(value)) {
     spa_pod_builder_float(builder, std::get<float>(value));
   } else if (std::holds_alternative<double>(value)) {

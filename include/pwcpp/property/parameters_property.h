@@ -85,6 +85,10 @@ private:
           spa_pod_get_int(struct_field, &int_value);
           values.emplace_back(int_value);
           break;
+        case SPA_TYPE_Long:
+          long long_value;
+          spa_pod_get_long(struct_field, &long_value);
+          values.emplace_back(long_value);
         case SPA_TYPE_Float:
           float float_value;
           spa_pod_get_float(struct_field, &float_value);
