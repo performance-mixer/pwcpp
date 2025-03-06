@@ -97,9 +97,9 @@ public:
               auto app = static_cast<App<TData>*>(user_data);
 
               std::uint8_t buffer[1024];
-              spa_pod_builder builder;
+              spa_pod_builder builder{};
               spa_pod_builder_init(&builder, buffer, sizeof(buffer));
-              spa_pod_frame frame;
+              spa_pod_frame frame{};
               spa_pod_builder_push_object(&builder, &frame,
                                           SPA_TYPE_OBJECT_Props,
                                           SPA_PARAM_Props);

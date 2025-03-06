@@ -70,3 +70,27 @@ private:
   property_value_type _value{};
 };
 }
+
+template <typename VType>
+inline void print(std::ostream &os, const VType &value) {
+  if (std::holds_alternative<int>(value)) {
+    os << std::get<int>(value);
+  } else if (std::holds_alternative<float>(value)) {
+    os << std::get<float>(value);
+  } else if (std::holds_alternative<double>(value)) {
+    os << std::get<double>(value);
+  } else if (std::holds_alternative<std::string>(value)) {
+    os << std::get<std::string>(value);
+  } else if (std::holds_alternative<bool>(value)) {
+    os << (std::get<bool>(value) ? "true" : "false");
+  } else if (std::holds_alternative<std::nullopt_t>(value)) {
+    os << "nullopt";
+  }
+}
+
+inline std::ostream &operator<<(std::ostream &os,
+                                const pwcpp::property::property_value_type &
+                                value) {
+  print(os, value);
+  return os;
+}
