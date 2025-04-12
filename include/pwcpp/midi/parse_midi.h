@@ -17,7 +17,6 @@ inline std::optional<midi::message> parse_ump_64(const void *data) {
 
   auto *d = static_cast<const uint32_t*>(data);
 
-  uint8_t message_group = (d[0] >> 24) & 0xf;
   const uint8_t message_type = (d[0] >> 28) & 0xf;
 
   if (message_type < 0x4 || message_type > 0x7) {
