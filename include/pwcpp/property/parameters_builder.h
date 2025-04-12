@@ -15,7 +15,7 @@ public:
     : builder(builder) {}
 
   ParametersBuilder &add(std::string name, property_value_type value) {
-    _parameters.emplace_back(std::move(name), std::move(value));
+    _parameters->emplace_back(std::move(name), std::move(value));
     return *this;
   }
 
@@ -28,7 +28,10 @@ public:
   }
 
 private:
-  std::vector<std::tuple<std::string, property_value_type>> _parameters{};
+  std::shared_ptr<std::vector<std::tuple<std::string, property_value_type>>>
+  _parameters = std::make_shared<std::vector<std::tuple<
+    std::string, property_value_type>>>();
+
   TAppBuilder &builder;
 };
 }

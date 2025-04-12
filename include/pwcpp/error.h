@@ -1,9 +1,9 @@
 #pragma once
 
+#include <format>
 #include <string>
 
 namespace pwcpp {
-
 /*! \brief An error type.
  *
  * The error type is used to categorize errors.
@@ -14,6 +14,7 @@ enum class error_type {
   MIDI_PARSING_POD_CONTAINS_TOO_MANY_MESSAGES,
   NOT_IMPLEMENTED,
   ERROR_HANDLING_PROPERTY,
+  PARAMETER_NOT_FOUND,
 };
 
 /*! \brief An error.
@@ -36,15 +37,18 @@ struct error {
 
   /*! \brief Create an error to indicate that the pod is not a sequence. */
   static struct error midi_parsing_pod_not_a_sequence() {
-    return {"Midi Pod is not a sequence",
-            error_type::MIDI_PARSING_POD_NOT_A_SEQUENCE};
+    return {
+      "Midi Pod is not a sequence", error_type::MIDI_PARSING_POD_NOT_A_SEQUENCE
+    };
   }
 
   /*! \brief Create an error to indicate that the pod contains more midi
    * messages than expected. */
   static struct error midi_parsing_too_many_messages() {
-    return {"Midi Pod contains too many messages",
-            error_type::MIDI_PARSING_POD_CONTAINS_TOO_MANY_MESSAGES};
+    return {
+      "Midi Pod contains too many messages",
+      error_type::MIDI_PARSING_POD_CONTAINS_TOO_MANY_MESSAGES
+    };
   }
 
   /*! \brief Create an error to indicate that the feature is not implemented. */
@@ -57,6 +61,14 @@ struct error {
   static struct error error_handling_property() {
     return {"Error handling property", error_type::ERROR_HANDLING_PROPERTY};
   }
-};
 
+  /*! \brief Create an error to indicate that a parameter could not be found.
+   */
+  static struct error parameter_not_found(std::string &name) {
+    return {
+      std::format("Parameter {} not found", name),
+      error_type::PARAMETER_NOT_FOUND
+    };
+  }
+};
 } // namespace pwcpp

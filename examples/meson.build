@@ -15,3 +15,9 @@ executable(
   'parameters.cpp',
   dependencies: [pipewire_dep],
   include_directories: [include_directory])
+
+executable(
+  'parse_midi',
+  'parse_midi.cpp',
+  dependencies: [pipewire_dep],
+  include_directories: [include_directory])

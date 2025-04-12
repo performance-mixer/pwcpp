@@ -10,18 +10,20 @@ namespace pwcpp::property {
 class ParametersProperty : public Property {
 public:
   explicit ParametersProperty(
-    std::vector<std::tuple<std::string, property_value_type>> parameters) :
-    Property(SPA_PROP_params), _parameters(std::move(parameters)) {}
+    std::shared_ptr<std::vector<std::tuple<std::string, property_value_type>>>
+    parameters) : Property(SPA_PROP_params) {
+    _parameters = parameters;
+  }
 
   ~ParametersProperty() override = default;
 
   std::expected<void, error>
   add_to_pod_object(spa_pod_builder *builder) override {
-    if (!_parameters.empty()) {
+    if (!_parameters->empty()) {
       spa_pod_builder_prop(builder, _key, 0);
       spa_pod_frame frame{};
       spa_pod_builder_push_struct(builder, &frame);
-      for (auto &parameter : _parameters) {
+      for (auto &parameter : *_parameters) {
         spa_pod_builder_string(builder, std::get<0>(parameter).c_str());
         auto result = write_property_value(builder, std::get<1>(parameter));
         if (!result.has_value()) {
@@ -34,6 +36,23 @@ public:
     return {};
   };
 
+  template <typename T>
+  std::expected<void, error> update(std::string name, T &value) {
+    const auto existing_param = std::find_if(_parameters->begin(),
+                                             _parameters->end(),
+                                             [&name](auto &param) {
+                                               return std::get<0>(param) ==
+                                                 name;
+                                             });
+
+    if (existing_param == _parameters->end()) {
+      return std::unexpected(error::parameter_not_found(name));
+    }
+
+    get<1>(*existing_param) = value;
+    return {};
+  }
+
   std::expected<void, error>
   update_from_pod(const spa_pod *pod) {
     auto updates = parse(pod);
@@ -42,27 +61,29 @@ public:
     }
 
     for (auto &update : updates.value()) {
-      auto existing_param = std::find_if(_parameters.begin(), _parameters.end(),
+      auto existing_param = std::find_if(_parameters->begin(),
+                                         _parameters->end(),
                                          [&update](auto &param) {
                                            return std::get<0>(param) == std::get
                                              <0>(update);
                                          });
-      if (existing_param != _parameters.end()) {
+      if (existing_param != _parameters->end()) {
         std::get<1>(*existing_param) = std::get<1>(update);
       } else {
-        _parameters.emplace_back(update);
+        _parameters->emplace_back(update);
       }
     }
 
     return {};
   }
 
-  std::span<const std::tuple<std::string, property_value_type>> parameters() {
-    return _parameters;
+  std::span<const std::tuple<std::string, property_value_type>> parameters() const {
+    return *_parameters;
   }
 
 private:
-  std::vector<std::tuple<std::string, property_value_type>> _parameters{};
+  std::shared_ptr<std::vector<std::tuple<std::string, property_value_type>>>
+  _parameters{};
 
   static std::expected<std::vector<std::tuple<std::string, property_value_type>>
                        , error>
