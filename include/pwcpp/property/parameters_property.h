@@ -25,8 +25,8 @@ public:
       spa_pod_builder_push_struct(builder, &frame);
       for (auto &parameter : *_parameters) {
         spa_pod_builder_string(builder, std::get<0>(parameter).c_str());
-        auto result = write_property_value(builder, std::get<1>(parameter));
-        if (!result.has_value()) {
+        if (auto result = write_property_value(builder, std::get<1>(parameter));
+          !result.has_value()) {
           return std::unexpected(result.error());
         }
       }
@@ -77,7 +77,8 @@ public:
     return {};
   }
 
-  std::span<const std::tuple<std::string, property_value_type>> parameters() const {
+  std::span<const std::tuple<std::string, property_value_type>>
+  parameters() const {
     return *_parameters;
   }
 
