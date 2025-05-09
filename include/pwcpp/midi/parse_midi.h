@@ -28,7 +28,7 @@ inline std::optional<midi::message> parse_ump_64(const void *data) {
     uint8_t status = d[0] >> 16;
     if (status >= 0xb0 && status <= 0xbf) {
       return control_change{
-        .channel = static_cast<unsigned char>((status & 0x0f) + 1),
+        .channel = static_cast<unsigned char>((status & 0x0f)),
         .cc_number = static_cast<unsigned char>(d[0] >> 8 & 0x7f),
         .value = d[1]
       };
