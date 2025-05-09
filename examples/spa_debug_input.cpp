@@ -4,7 +4,7 @@
 #include <spa/debug/pod.h>
 
 int main(int argc, char *argv[]) {
-  std::string dsp_format = "8 bit raw midi";
+  std::string dsp_format = "8 bit raw OSC";
   if (argc > 1) {
     dsp_format = argv[1];
   }
