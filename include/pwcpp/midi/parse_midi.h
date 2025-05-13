@@ -9,6 +9,8 @@
 #include <expected>
 #include <optional>
 
+#include "note.h"
+
 namespace pwcpp::midi {
 inline std::optional<midi::message> parse_ump_64(const void *data) {
   if (data == nullptr) {
@@ -29,8 +31,23 @@ inline std::optional<midi::message> parse_ump_64(const void *data) {
     if (status >= 0xb0 && status <= 0xbf) {
       return control_change{
         .channel = static_cast<unsigned char>((status & 0x0f)),
-        .cc_number = static_cast<unsigned char>(d[0] >> 8 & 0x7f),
-        .value = d[1]
+        .cc_number = static_cast<unsigned char>(d[0] >> 8 & 0x7f), .value = d[1]
+      };
+    }
+
+    if (status >= 0x80 && status <= 0x8f) {
+      return note_off{
+        .channel = static_cast<unsigned char>((status & 0x0f)),
+        .note = static_cast<unsigned char>(d[0] >> 8 & 0x7f),
+        .velocity = static_cast<uint16_t>((d[1] >> 16) & 0xffff)
+      };
+    }
+
+    if (status >= 0x90 && status <= 0x9f) {
+      return note_on{
+        .channel = static_cast<unsigned char>((status & 0x0f)),
+        .note = static_cast<unsigned char>(d[0] >> 8 & 0x7f),
+        .velocity = static_cast<uint16_t>((d[1] >> 16) & 0xffff)
       };
     }
   }
